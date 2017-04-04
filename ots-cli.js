@@ -151,46 +151,37 @@ function multistamp(argsFiles) {
   Promise.all(filePromises).then(values => {
     const timestampBytesPromise = OpenTimestamps.multistamp(values);
     timestampBytesPromise.then(timestams => {
-      if (timestams === undefined) {
-        console.error('Invalid timestamp');
-        return;
-      }
-
-      timestams.forEach((timestamp, i) => {
+      timestams.forEach(timestamp => {
         const ctx = new Context.StreamDeserialization(timestamp);
         const detachedTimestampFile = DetachedTimestampFile.DetachedTimestampFile.deserialize(ctx);
         if (detachedTimestampFile === undefined) {
           console.error('Invalid timestamp');
-          return;
+        } else {
+          console.log('STAMP result : ');
+          console.log(Utils.bytesToHex(detachedTimestampFile.timestamp.msg));
         }
-
-        // console.log('STAMP result : ');
-        // console.log(Utils.bytesToHex(detachedTimestampFile.timestamp.msg));
-
-        const buffer = new Buffer(timestamp);
-        const otsFilename = argsFiles[i] + '.ots';
-        saveOts(otsFilename, buffer);
       });
+
+/*
+      const buffer = new Buffer(timestampBytes);
+      const otsFilename = argsFile + '.ots';
+      fs.exists(otsFilename, fileExist => {
+        if (fileExist) {
+          console.log('The timestamp proof \'' + otsFilename + '\' already exists');
+        } else {
+          fs.writeFile(otsFilename, buffer, 'binary', err => {
+            if (err) {
+              return console.log(err);
+            }
+            console.log('The timestamp proof \'' + otsFilename + '\' has been created!');
+          });
+        }
+      }); */
     }).catch(err => {
       console.log('Error: ' + err);
     });
   }).catch(err => {
     console.log('Error: ' + err);
-  });
-}
-
-function saveOts(otsFilename, buffer) {
-  fs.exists(otsFilename, fileExist => {
-    if (fileExist) {
-      console.log('The timestamp proof \'' + otsFilename + '\' already exists');
-    } else {
-      fs.writeFile(otsFilename, buffer, 'binary', err => {
-        if (err) {
-          return console.log(err);
-        }
-        console.log('The timestamp proof \'' + otsFilename + '\' has been created!');
-      });
-    }
   });
 }
 

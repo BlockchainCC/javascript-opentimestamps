@@ -115,12 +115,14 @@ class Insight {
 }
 
 // const urls = ['https://notexisting.it', 'https://search.bitaccess.co/insight-api', 'https://search.bitaccess.co/insight-api', 'https://insight.bitpay.com/api'];
-const urls = ['https://www.localbitcoinschain.com/api', 'https://search.bitaccess.co/insight-api', 'https://insight.bitpay.com/api', 'https://ots.eternitywall.it/insight-api'];
+// const urls = ['https://www.localbitcoinschain.com/api', 'https://search.bitaccess.co/insight-api', 'https://insight.bitpay.com/api', 'https://ots.eternitywall.it/insight-api'];
+// const urls = ['https://test-insight.bitpay.com/api', 'https://test-insight.bitpay.com/api'];
 
 class MultiInsight {
 
-  constructor() {
+  constructor(urls) {
     this.insights = [];
+    console.log('[OTS] -- Using Insight: ' + urls);
     urls.forEach(url => {
       this.insights.push(new Insight(url));
     });

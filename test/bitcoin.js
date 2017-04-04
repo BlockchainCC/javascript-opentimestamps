@@ -10,8 +10,7 @@ test('Bitcoin.info()', assert => {
       assert.true(json !== undefined);
       assert.end();
     }).catch(err => {
-      assert.true('err=' + err);
-      assert.end();
+      assert.fail('err=' + err);
     });
   }).catch(err => {
     assert.true('err=' + err);
@@ -28,8 +27,7 @@ test('Bitcoin.getBlockHeader()', assert => {
       assert.equals('1231006505', String(blockHeader.getTime()));
       assert.end();
     }).catch(err => {
-      assert.true('err=' + err);
-      assert.end();
+      assert.fail('err=' + err);
     });
   }).catch(err => {
     assert.true('err=' + err);

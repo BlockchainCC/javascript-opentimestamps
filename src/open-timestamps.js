@@ -7,7 +7,6 @@
  * @license LPGL3
  */
 
-const Web3 = require('web3');
 const Context = require('./context.js');
 const DetachedTimestampFile = require('./detached-timestamp-file.js');
 const Timestamp = require('./timestamp.js');
@@ -19,7 +18,24 @@ const Insight = require('./insight.js');
 const Merkle = require('./merkle.js');
 const Bitcoin = require('./bitcoin.js');
 
+
 module.exports = {
+  calendarUrls: [],
+  insightUrls: [],
+  /**
+   * Configure the server address of timestamps.
+   * @exports OpenTimestamps/config
+   * @param {ArrayString} calendarUrls - The array list of ots Servers.
+   */
+  config(serverList, insightList) {
+    if (typeof serverList != 'object' || !serverList.length)
+      return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for serverList!');
+    if (typeof insightList != 'object' || !insightList.length)
+        return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for insightList!');
+    this.calendarUrls = serverList;
+    this.insightUrls = insightList;
+    return true;
+  },
 
   /**
    * Show information on a timestamp.
@@ -38,7 +54,8 @@ module.exports = {
       const fileHash = Utils.bytesToHex(detachedTimestampFile.timestamp.msg);
       const hashOp = detachedTimestampFile.fileHashOp._HASHLIB_NAME();
       const firstLine = 'File ' + hashOp + ' hash: ' + fileHash + '\n';
-      return firstLine + 'Timestamp:\n' + detachedTimestampFile.timestamp.strTree();
+      //return firstLine + 'Timestamp:\n' + detachedTimestampFile.timestamp.strTree();
+      return firstLine + 'Timestamp:\n' + Timestamp.strTreeExtended(detachedTimestampFile.timestamp);
     } catch (err) {
       return 'Error deserialization ' + err;
     }
@@ -52,6 +69,10 @@ module.exports = {
    */
   stamp(plain, isHash) {
     return new Promise((resolve, reject) => {
+      if (!this.calendarUrls.length) {
+        console.error('OTS Server not configured! Use config() function to configure an OTS server');
+        return reject('No OTS Server');
+      }
       let fileTimestamp;
       if (isHash !== undefined && isHash === true) {
         // Read Hash
@@ -102,12 +123,11 @@ module.exports = {
       const merkleTip = merkleRoot;
 
       // Calendars
-      const calendarUrls = [];
-      calendarUrls.push('https://alice.btc.calendar.opentimestamps.org');
+      // const calendarUrls = [];
+      // calendarUrls.push('https://alice.btc.calendar.opentimestamps.org');
       // calendarUrls.append('https://b.pool.opentimestamps.org');
-      calendarUrls.push('https://ots.eternitywall.it');
-
-      this.createTimestamp(merkleTip, calendarUrls).then(timestamp => {
+      // calendarUrls.push('https://ots.eternitywall.it');
+      this.createTimestamp(merkleTip, this.calendarUrls).then(timestamp => {
         if (timestamp === undefined) {
           return reject();
         }
@@ -129,6 +149,10 @@ module.exports = {
    */
   multistamp(plains, isHash) {
     return new Promise((resolve, reject) => {
+      if (!this.calendarUrls.length) {
+        console.error('OTS Server not configured! Use config() function to configure an OTS server');
+        return reject('No OTS Server');
+      }
       const fileTimestamps = [];
       const merkleRoots = [];
 
@@ -183,28 +207,40 @@ module.exports = {
         merkleRoots.push(merkleRoot);
       });
 
+      console.log('fileTimestamps');
+      fileTimestamps.forEach(fileTimestamp => {
+        console.log('> ', Timestamp.strTreeExtended(fileTimestamp.timestamp));
+      });
+      console.log('merkleRoots');
+      merkleRoots.forEach(merkleRoot => {
+        console.log('> ', Timestamp.strTreeExtended(merkleRoot));
+      });
+
       const merkleTip = Merkle.makeMerkleTree(merkleRoots);
 
-      // Calendars
-      const calendarUrls = [];
-      calendarUrls.push('https://alice.btc.calendar.opentimestamps.org');
-      // calendarUrls.append('https://b.pool.opentimestamps.org');
-      calendarUrls.push('https://ots.eternitywall.it');
+      console.log('merkleTip');
+      console.log('> ', Timestamp.strTreeExtended(merkleTip));
 
-      this.createTimestamp(merkleTip, calendarUrls).then(timestamp => {
+      // Calendars
+      // const calendarUrls = [];
+      // calendarUrls.push('https://alice.btc.calendar.opentimestamps.org');
+      // calendarUrls.append('https://b.pool.opentimestamps.org');
+      // calendarUrls.push('https://ots.eternitywall.it');
+
+      this.createTimestamp(merkleTip, this.calendarUrls).then(timestamp => {
         if (timestamp === undefined) {
           return reject();
         }
-
+        console.log('Timestamp');
+        console.log(Timestamp.strTreeExtended(timestamp));
         // Timestamps serialization
         const proofs = [];
-
         fileTimestamps.forEach(fileTimestamp => {
           const css = new Context.StreamSerialization();
           fileTimestamp.serialize(css);
           proofs.push(css.getOutput());
+          console.log(Utils.bytesToHex(Utils.arrayToBytes(css.getOutput())));
         });
-
         resolve(proofs);
       }).catch(err => {
         reject(err);
@@ -300,6 +336,10 @@ module.exports = {
    */
   verifyTimestamp(timestamp) {
     return new Promise((resolve, reject) => {
+      if (!this.insightUrls.length) {
+        console.error('OTS Insight not configured! Use config() function to configure an OTS insight');
+        return reject('No OTS Insight');
+      }
       // upgradeTimestamp(timestamp, args);
       let found = false;
 
@@ -307,18 +347,6 @@ module.exports = {
         if (!found) { // Verify only the first BitcoinBlockHeaderAttestation
           if (attestation instanceof Notary.PendingAttestation) {
             // console.log('PendingAttestation: pass ');
-          } else if (attestation instanceof Notary.EthereumBlockHeaderAttestation) {
-            found = true;
-            try {
-              const web3 = new Web3();
-              web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
-              const block = web3.eth.getBlock(attestation.height);
-              const attestedTime = attestation.verifyAgainstBlockheader(msg, block);
-              // console.log("Success! Ethereum attests data existed as of " % time.strftime('%c %Z', time.localtime(attestedTime)))
-              return resolve(attestedTime);
-            } catch (err) {
-              return reject(err);
-            }
           } else if (attestation instanceof Notary.BitcoinBlockHeaderAttestation) {
             found = true;
 
@@ -334,11 +362,14 @@ module.exports = {
                 } else {
                   resolve();
                 }
+              }).catch(err => {
+                console.error('Error: ' + err);
+                resolve();
               });
             }).catch(() => {
               // There is no local node available
               // Request to insight
-              const insight = new Insight.MultiInsight();
+              const insight = new Insight.MultiInsight(this.insightUrls);
               insight.blockhash(attestation.height).then(blockHash => {
                 console.log('Lite-client verification, assuming block ' + blockHash + ' is valid');
                 insight.block(blockHash).then(blockInfo => {
@@ -419,10 +450,10 @@ module.exports = {
     // Check remote calendars for upgrades.
     // This time we only check PendingAttestations - we can't be as agressive.
 
-    const calendarUrls = [];
+    // const calendarUrls = [];
     // calendarUrls.push('https://alice.btc.calendar.opentimestamps.org');
     // calendarUrls.append('https://b.pool.opentimestamps.org');
-    calendarUrls.push('https://ots.eternitywall.it');
+    // calendarUrls.push('https://ots.eternitywall.it');
 
     const existingAttestations = timestamp.getAttestations();
     const promises = [];

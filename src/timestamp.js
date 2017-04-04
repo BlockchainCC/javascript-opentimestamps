@@ -102,11 +102,11 @@ class Timestamp {
       }
 
       // all op/stamp
-      let index = 0;
+      let counter = 0;
       this.ops.forEach((stamp, op) => {
-        if (index < this.ops.size - 1) {
+        if (counter < this.ops.size - 1) {
           ctx.writeBytes([0xff]);
-          index++;
+          counter++;
         }
         op.serialize(ctx);
         stamp.serialize(ctx);
