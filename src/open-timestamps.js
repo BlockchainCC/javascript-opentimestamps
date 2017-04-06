@@ -336,10 +336,6 @@ module.exports = {
    */
   verifyTimestamp(timestamp) {
     return new Promise((resolve, reject) => {
-      if (!this.insightUrls.length) {
-        console.error('OTS Insight not configured! Use config() function to configure an OTS insight');
-        return reject('No OTS Insight');
-      }
       // upgradeTimestamp(timestamp, args);
       let found = false;
 
@@ -369,6 +365,10 @@ module.exports = {
             }).catch(() => {
               // There is no local node available
               // Request to insight
+              if (!this.insightUrls.length) {
+                console.error('OTS Insight not configured! Use config() function to configure an OTS insight');
+                return reject('No OTS Insight');
+              }
               const insight = new Insight.MultiInsight(this.insightUrls);
               insight.blockhash(attestation.height).then(blockHash => {
                 console.log('Lite-client verification, assuming block ' + blockHash + ' is valid');
