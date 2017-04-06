@@ -20,7 +20,7 @@ const Bitcoin = require('./bitcoin.js');
 
 
 module.exports = {
-  calendarUrls: [],
+  calendarUrls: ['http://localhost:14788'],
   insightUrls: [],
   /**
    * Configure the server address of timestamps.
