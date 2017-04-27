@@ -28,11 +28,11 @@ module.exports = {
    * @param {ArrayString} calendarUrls - The array list of ots Servers.
    */
   config(serverList, insightList) {
-    if (typeof serverList != 'object' || !serverList.length)
+    if (serverList !=undefined && (typeof serverList != 'object' || !serverList.length))
       return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for serverList!');
-    if (typeof insightList != 'object' || !insightList.length)
-        return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for insightList!');
     this.calendarUrls = serverList;
+    if (insightList !=undefined && (typeof insightList != 'object' || !insightList.length))
+        return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for insightList!');
     this.insightUrls = insightList;
     return true;
   },
