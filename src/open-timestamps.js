@@ -22,15 +22,19 @@ const Bitcoin = require('./bitcoin.js');
 module.exports = {
   calendarUrls: ['http://localhost:14788'],
   insightUrls: [],
+  rpcConfig: {},
   /**
    * Configure the server address of timestamps.
    * @exports OpenTimestamps/config
    * @param {ArrayString} calendarUrls - The array list of ots Servers.
    */
-  config(serverList, insightList) {
+  config(serverList, rpcConfig, insightList) {
     if (serverList !=undefined && (typeof serverList != 'object' || !serverList.length))
       return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for serverList!');
     this.calendarUrls = serverList;
+    if (rpcConfig !=undefined && (typeof rpcConfig != 'object' || !rpcConfig.length))
+        return console.error('[OpenTimeStamp] - config: Only object type for rpcConfig!');
+    this.rpcConfig = rpcConfig;
     if (insightList !=undefined && (typeof insightList != 'object' || !insightList.length))
         return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for insightList!');
     this.insightUrls = insightList;
@@ -347,7 +351,42 @@ module.exports = {
             found = true;
 
             // Check for local bitcoin configuration
-            Bitcoin.BitcoinNode.readBitcoinConf().then(properties => {
+            Bitcoin.BitcoinNode.useRemoteRpc(this.rpcConfig)
+            .then(properties => {
+              const bitcoin = new Bitcoin.BitcoinNode(properties);
+              bitcoin.getBlockHeader(attestation.height).then(blockHeader => {
+                const merkle = Utils.hexToBytes(blockHeader.getMerkleroot());
+                const message = msg.reverse();
+                // One Bitcoin attestation is enought
+                if (Utils.arrEq(merkle, message)) {
+                  resolve(blockHeader.time);
+                } else {
+                  resolve();
+                }
+              }).catch(err => {
+                console.error('Error: ' + err);
+                resolve();
+              });
+            })
+            .catch(()=>{
+              return Bitcoin.BitcoinNode.readBitcoinConf();
+            })
+            .then(properties => {
+              const bitcoin = new Bitcoin.BitcoinNode(properties);
+              bitcoin.getBlockHeader(attestation.height).then(blockHeader => {
+                const merkle = Utils.hexToBytes(blockHeader.getMerkleroot());
+                const message = msg.reverse();
+                // One Bitcoin attestation is enought
+                if (Utils.arrEq(merkle, message)) {
+                  resolve(blockHeader.time);
+                } else {
+                  resolve();
+                }
+              }).catch(err => {
+                console.error('Error: ' + err);
+                resolve();
+              });
+            }).catch(() => {
               const bitcoin = new Bitcoin.BitcoinNode(properties);
               bitcoin.getBlockHeader(attestation.height).then(blockHeader => {
                 const merkle = Utils.hexToBytes(blockHeader.getMerkleroot());

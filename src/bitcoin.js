@@ -89,6 +89,23 @@ class BitcoinNode {
       });
     });
   }
+  static useRemoteRpc(config) {
+    return new Promise((resolve, reject) => {
+      if (config === undefined || config.length === 0) {
+            return reject(new Error('Config empty'));
+      }
+      if (config.rpcuser === undefined || config.rpcpassword === undefined){
+            return reject(new Error('Missing RPC Username or Password'));
+      }
+      if (config.rpcconnect === undefined){
+            return reject(new Error('Missing RPC Host'));
+      }
+      if (config.rpcport === undefined) {
+        config.rpcport = '8332';
+      }
+      return resolve(config);
+    });
+  }
 
   getInfo() {
     const params = {
