@@ -28,10 +28,10 @@ module.exports = {
    * @exports OpenTimestamps/config
    * @param {ArrayString} calendarUrls - The array list of ots Servers.
    */
-  config(serverList, rpcConfig, insightList) {
-    if (serverList !=undefined && (typeof serverList != 'object' || !serverList.length))
-      return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for serverList!');
-    this.calendarUrls = serverList;
+  config(calendarList, rpcConfig, insightList) {
+    if (calendarList !=undefined && (typeof calendarList != 'object' || !calendarList.length))
+      return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for calendarList!');
+    this.calendarUrls = calendarList;
     if (rpcConfig !=undefined && (typeof rpcConfig != 'object' || !rpcConfig.length))
         return console.error('[OpenTimeStamp] - config: Only object type for rpcConfig!');
     this.rpcConfig = rpcConfig;
