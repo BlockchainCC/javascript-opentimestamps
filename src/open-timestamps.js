@@ -32,7 +32,7 @@ module.exports = {
     if (calendarList !=undefined && (typeof calendarList != 'object' || !calendarList.length))
       return console.error('[OpenTimeStamp] - config: Only typeof Array list accepted for calendarList!');
     this.calendarUrls = calendarList;
-    if (rpcConfig !=undefined && (typeof rpcConfig != 'object' || !rpcConfig.length))
+    if (rpcConfig !=undefined && (typeof rpcConfig != 'object'))
         return console.error('[OpenTimeStamp] - config: Only object type for rpcConfig!');
     this.rpcConfig = rpcConfig;
     if (insightList !=undefined && (typeof insightList != 'object' || !insightList.length))
